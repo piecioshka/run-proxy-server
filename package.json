@@ -1,0 +1,44 @@
+{
+  "name": "run-proxy-server",
+  "version": "0.0.0",
+  "description": "Simple tool to proxy HTTP/HTTPS requests via a local Node.js server with built-in caching",
+  "main": "index.js",
+  "bin": {
+    "run-proxy-server": "bin/run-proxy-server.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "index.js",
+    "package.json",
+    "README.md",
+    "!**/*.spec.*"
+  ],
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "nodemon src/main.js",
+    "test": "node --test test/*.test.js",
+    "version": "auto-changelog -p && git add CHANGELOG.md"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "debug": "^4.3.4",
+    "minimist": "^1.2.8"
+  },
+  "devDependencies": {
+    "auto-changelog": "^2.5.0",
+    "nodemon": "^3.1.14"
+  },
+  "keywords": [
+    "proxy",
+    "http",
+    "https",
+    "cache",
+    "cli",
+    "nodejs"
+  ],
+  "author": "Piotr Kowalski",
+  "license": "MIT"
+}
