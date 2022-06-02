@@ -1,12 +1,21 @@
 {
+  "private": true,
   "name": "proxy-server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
+    "start": "node src/server.js --url https://sklep.pgg.pl",
+    "dev": "nodemon src/server.js --url https://sklep.pgg.pl",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.16"
+  },
+  "dependencies": {
+    "isomorphic-fetch": "^3.0.0",
+    "yargs": "^17.5.1"
+  }
 }
