@@ -2,21 +2,21 @@
   "private": true,
   "name": "proxy-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple tool for pass requests via vanilla Node.js proxy server",
   "scripts": {
     "start": "node src/main.js",
     "dev": "nodemon src/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "nodemon": "^2.0.20"
-  },
   "dependencies": {
     "debug": "^4.3.4",
     "isomorphic-fetch": "^3.0.0",
     "yargs": "^17.6.2"
-  }
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
