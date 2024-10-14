@@ -51,7 +51,7 @@ async function handleRequest(req, res) {
 function main() {
   const server = createServer(PROTOCOL)(handleRequest);
   server.listen(APP_PORT, () => {
-    console.log(`Server started on ${PROTOCOL}://localhost:${APP_PORT}`);
+    console.log(`Server was started at ${PROTOCOL}://localhost:${APP_PORT}`);
   });
 }
 
