@@ -7,8 +7,8 @@
 - ✅ create a HTTP server, which proxy all requests
 - ✅ support HTTPS protocol in passed URL
 - ✅ caching resource in local directory [#3](https://github.com/piecioshka/proxy-server/issues/3)
-- ✅ support denylist of URLs which will be not cached [#7](https://github.com/piecioshka/proxy-server/issues/7)
 - ✅ check if resource is cached in local directory, and use it instead of make a request [#5](https://github.com/piecioshka/proxy-server/issues/5)
+- ✅ support denylist of URLs which will be not cached [#7](https://github.com/piecioshka/proxy-server/issues/7)
 
 ## Installation
 
@@ -26,30 +26,19 @@ Start the proxy server with a target URL and port:
 npm run start -- --url URL --port PORT [--denylist PATTERNS]
 ```
 
-### Options
-
-- `--url` (required): The base URL to proxy requests to
-- `--port` (optional): The port for the proxy server (default: 8000)
-- `--denylist` (optional): Comma-separated list of URL patterns to exclude from caching. Supports wildcards (`*`). Example: `--denylist "*/api/*,*.json,https://example.com/admin/*"`
-
-### Examples
-
-```bash
-# Start proxy server without denylist
-npm run start -- --url https://example.com --port 8080
-
-# Start proxy server with denylist
-npm run start -- --url https://example.com --port 8080 --denylist "*/api/*,*.json"
-npm run start -- --url https://example.com --port 8000
-```
-
 Then make requests to the proxy server:
 
 ```bash
 curl http://localhost:8000/
 ```
 
-The first request will fetch from `https://example.com/` and cache the response. Subsequent requests will be served from the cache.
+The first request will fetch from the target URL and cache the response. Subsequent requests will be served from the cache.
+
+### Options
+
+- `--url` (required): The base URL to proxy requests to
+- `--port` (optional): The port for the proxy server (default: 8000)
+- `--denylist` (optional): Comma-separated list of URL patterns to exclude from caching. Supports wildcards (`*`). Example: `--denylist "*/api/*,*.json,https://example.com/admin/*"`
 
 ### Usage Examples
 
@@ -79,7 +68,20 @@ curl http://localhost:8000/users/octocat
 curl http://localhost:8000/users/octocat
 ```
 
-#### Example 3: Proxying static assets
+#### Example 3: Proxying with denylist
+
+```bash
+# Start proxy server with denylist to exclude dynamic API endpoints
+npm run start -- --url https://example.com --port 8080 --denylist "*/api/*,*.json"
+
+# API requests won't be cached (always fresh)
+curl http://localhost:8080/api/users
+
+# Static content will be cached
+curl http://localhost:8080/index.html
+```
+
+#### Example 4: Proxying static assets
 
 ```bash
 # Proxy a CDN
@@ -98,6 +100,7 @@ curl http://localhost:8000/app.js
 - **Cache location**: `.cache/` directory in the project root
 - **Cache key**: MD5 hash of the full URL
 - **Cached data**: Response body, headers, and status code
+- **Denylist**: URLs matching denylist patterns are never cached
 
 To clear the cache, simply delete the `.cache` directory:
 
@@ -106,6 +109,8 @@ rm -rf .cache
 ```
 
 ## Development
+
+Run with auto-reload on file changes:
 
 ```bash
 npm run dev -- --url URL --port PORT [--denylist PATTERNS]
@@ -119,14 +124,12 @@ Run the unit tests:
 npm test
 ```
 
-The test suite includes comprehensive tests for the denylist functionality, covering:
-- Pattern parsing and caching
-- Wildcard matching (beginning, middle, end)
-- Multiple patterns
-- Special character escaping
-- Performance optimizations
+The test suite includes comprehensive tests for:
+- **Denylist functionality**: Pattern parsing, wildcard matching, caching
+- **Cache operations**: Text content, binary content, cache key generation
+- **Error handling**: Corrupt cache files, status code preservation
 
-## Examples
+## Denylist Examples
 
 See the [`examples/`](examples/) directory for detailed usage examples:
 
@@ -137,9 +140,3 @@ See the [`examples/`](examples/) directory for detailed usage examples:
 - **CDN Exclusion** - Exclude CDN domains
 
 For more details, see [examples/README.md](examples/README.md).
-The test suite includes:
-- Text content caching (HTML, JSON)
-- Binary content caching (images)
-- Cache key generation
-- Error handling for corrupt cache files
-- Status code preservation
