@@ -83,6 +83,9 @@ web_modules/
 .cache
 .parcel-cache
 
+# Proxy server cache directory
+.cache/
+
 # Next.js build output
 .next
 out

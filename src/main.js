@@ -3,6 +3,7 @@ const debug = require("debug");
 const { APP_PORT, PROTOCOL } = require("./config");
 const { createServer } = require("./createServer");
 const { proxy } = require("./proxy");
+const { isCached, loadFromCache, saveToCache, restoreBody } = require("./cache");
 
 debug.enable("*");
 
@@ -28,6 +29,31 @@ async function getResponseBody(response, headers) {
 
 async function handleRequest(req, res) {
   try {
+    const { URL, HOST, PROTOCOL: targetProtocol } = require("./config");
+    const fullUrl = `${targetProtocol}://${HOST}${req.url}`;
+    
+    // Check if resource is cached
+    if (isCached(fullUrl)) {
+      const cached = loadFromCache(fullUrl);
+      if (cached) {
+        const body = restoreBody(cached);
+        const size = Buffer.byteLength(body);
+        const type = cached.headers["content-type"];
+        console.debug(fullUrl, "-", size, "-", type, "(cached)");
+        const newHeaders = { ...cached.headers };
+
+        delete newHeaders["content-encoding"];
+
+        if (cached.headers["content-length"]) {
+          newHeaders["content-length"] = String(size);
+        }
+
+        res.writeHead(cached.status, newHeaders).end(body);
+        return;
+      }
+    }
+
+    // Fetch from proxy if not cached
     const response = await proxy(req);
     const responseHeaders = Object.fromEntries(new Map(response.headers));
     const body = await getResponseBody(response, responseHeaders);
@@ -41,6 +67,9 @@ async function handleRequest(req, res) {
     if (responseHeaders["content-length"]) {
       newHeaders["content-length"] = String(size);
     }
+
+    // Save to cache
+    saveToCache(fullUrl, body, responseHeaders, response.status);
 
     res.writeHead(response.status, newHeaders).end(body);
   } catch (err) {
