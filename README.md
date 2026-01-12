@@ -10,10 +10,82 @@
 - ✅ check if resource is cached in local directory, and use it instead of make a request [#5](https://github.com/piecioshka/proxy-server/issues/5)
 - ⛔ support denylist of URLs which will be not cached [#7](https://github.com/piecioshka/proxy-server/issues/7)
 
-## Usage
+## Installation
 
 ```bash
-npm run start -- --url URL --port PORT
+npm install
+```
+
+## Usage
+
+### Basic Usage
+
+Start the proxy server with a target URL and port:
+
+```bash
+npm run start -- --url https://example.com --port 8000
+```
+
+Then make requests to the proxy server:
+
+```bash
+curl http://localhost:8000/
+```
+
+The first request will fetch from `https://example.com/` and cache the response. Subsequent requests will be served from the cache.
+
+### Usage Examples
+
+#### Example 1: Proxying a website
+
+```bash
+# Start the proxy server
+npm run start -- --url https://jsonplaceholder.typicode.com --port 8000
+
+# Make a request (will proxy and cache)
+curl http://localhost:8000/posts/1
+
+# Make the same request again (will be served from cache)
+curl http://localhost:8000/posts/1
+```
+
+#### Example 2: Proxying API endpoints
+
+```bash
+# Proxy an API server
+npm run start -- --url https://api.github.com --port 8000
+
+# First request - proxied and cached
+curl http://localhost:8000/users/octocat
+
+# Second request - served from cache (faster, no network call)
+curl http://localhost:8000/users/octocat
+```
+
+#### Example 3: Proxying static assets
+
+```bash
+# Proxy a CDN
+npm run start -- --url https://cdn.example.com --port 8000
+
+# Request images, CSS, JS - all cached after first request
+curl http://localhost:8000/styles.css
+curl http://localhost:8000/logo.png
+curl http://localhost:8000/app.js
+```
+
+### Cache Behavior
+
+- **First request**: Proxied to the target URL and cached locally
+- **Subsequent requests**: Served from the `.cache` directory
+- **Cache location**: `.cache/` directory in the project root
+- **Cache key**: MD5 hash of the full URL
+- **Cached data**: Response body, headers, and status code
+
+To clear the cache, simply delete the `.cache` directory:
+
+```bash
+rm -rf .cache
 ```
 
 ## Development
@@ -21,3 +93,18 @@ npm run start -- --url URL --port PORT
 ```bash
 npm run dev -- --url URL --port PORT
 ```
+
+## Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+The test suite includes:
+- Text content caching (HTML, JSON)
+- Binary content caching (images)
+- Cache key generation
+- Error handling for corrupt cache files
+- Status code preservation
