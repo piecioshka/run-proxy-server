@@ -31,10 +31,6 @@ function getCacheFilePath(url) {
 function getCached(url) {
   try {
     const filePath = getCacheFilePath(url);
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-
     const data = fs.readFileSync(filePath, "utf-8");
     const cached = JSON.parse(data);
     
