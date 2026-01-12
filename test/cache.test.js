@@ -10,11 +10,7 @@ describe("Cache Module", () => {
   after(() => {
     // Cleanup: Remove test cache directory
     if (fs.existsSync(testCacheDir)) {
-      const files = fs.readdirSync(testCacheDir);
-      files.forEach((file) => {
-        fs.unlinkSync(path.join(testCacheDir, file));
-      });
-      fs.rmdirSync(testCacheDir);
+      fs.rmSync(testCacheDir, { recursive: true, force: true });
     }
   });
 
@@ -116,11 +112,7 @@ describe("Cache Module", () => {
     it("should create cache directory if it doesn't exist", async () => {
       // Remove cache directory if it exists
       if (fs.existsSync(testCacheDir)) {
-        const files = fs.readdirSync(testCacheDir);
-        files.forEach((file) => {
-          fs.unlinkSync(path.join(testCacheDir, file));
-        });
-        fs.rmdirSync(testCacheDir);
+        fs.rmSync(testCacheDir, { recursive: true, force: true });
       }
 
       const testUrl = "http://example.com/test-dir-creation.html";
