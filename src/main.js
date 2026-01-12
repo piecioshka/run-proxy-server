@@ -1,8 +1,9 @@
 require("isomorphic-fetch");
 const debug = require("debug");
-const { APP_PORT, PROTOCOL } = require("./config");
+const { APP_PORT, PROTOCOL, HOST } = require("./config");
 const { createServer } = require("./createServer");
 const { proxy } = require("./proxy");
+const { getCached, saveToCache } = require("./cache");
 
 debug.enable("*");
 
@@ -28,6 +29,17 @@ async function getResponseBody(response, headers) {
 
 async function handleRequest(req, res) {
   try {
+    const url = `${PROTOCOL}://${HOST}${req.url}`;
+    
+    // Check if the resource is cached
+    const cached = getCached(url);
+    if (cached) {
+      console.debug(url, "- CACHED");
+      res.writeHead(cached.status, cached.headers).end(cached.body);
+      return;
+    }
+    
+    // Not cached, make the request
     const response = await proxy(req);
     const responseHeaders = Object.fromEntries(new Map(response.headers));
     const body = await getResponseBody(response, responseHeaders);
@@ -41,6 +53,9 @@ async function handleRequest(req, res) {
     if (responseHeaders["content-length"]) {
       newHeaders["content-length"] = String(size);
     }
+
+    // Save to cache
+    saveToCache(url, body, newHeaders, response.status);
 
     res.writeHead(response.status, newHeaders).end(body);
   } catch (err) {
