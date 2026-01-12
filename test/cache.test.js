@@ -31,7 +31,7 @@ describe("Cache Module", () => {
       saveToCache(url, body, headers, status);
 
       const cached = getCached(url);
-      assert.strictEqual(cached !== null, true, "Cache should not be null");
+      assert.ok(cached, "Cache should not be null");
       assert.strictEqual(cached.body, body);
       assert.deepStrictEqual(cached.headers, headers);
       assert.strictEqual(cached.status, status);
@@ -46,7 +46,7 @@ describe("Cache Module", () => {
       saveToCache(url, body, headers, status);
 
       const cached = getCached(url);
-      assert.strictEqual(cached !== null, true, "Cache should not be null");
+      assert.ok(cached, "Cache should not be null");
       assert.strictEqual(Buffer.isBuffer(cached.body), true);
       assert.deepStrictEqual(cached.body, body);
       assert.deepStrictEqual(cached.headers, headers);
@@ -62,7 +62,7 @@ describe("Cache Module", () => {
       saveToCache(url, body, headers, status);
 
       const cached = getCached(url);
-      assert.strictEqual(cached !== null, true, "Cache should not be null");
+      assert.ok(cached, "Cache should not be null");
       assert.strictEqual(cached.body, body);
       assert.deepStrictEqual(cached.headers, headers);
       assert.strictEqual(cached.status, status);
@@ -77,7 +77,7 @@ describe("Cache Module", () => {
       saveToCache(url, body, headers, status);
 
       const cached = getCached(url);
-      assert.strictEqual(cached !== null, true, "Cache should not be null");
+      assert.ok(cached, "Cache should not be null");
       assert.strictEqual(cached.status, 404);
     });
 
@@ -107,7 +107,7 @@ describe("Cache Module", () => {
       saveToCache(url, body, headers, status);
       const cached = getCached(url);
 
-      assert.strictEqual(cached !== null, true);
+      assert.ok(cached);
       assert.strictEqual(cached.body, body);
       assert.deepStrictEqual(cached.headers, headers);
       assert.strictEqual(cached.status, status);
@@ -122,7 +122,7 @@ describe("Cache Module", () => {
       saveToCache(url, body, headers, status);
       const cached = getCached(url);
 
-      assert.strictEqual(cached !== null, true);
+      assert.ok(cached);
       assert.strictEqual(Buffer.isBuffer(cached.body), true);
       assert.deepStrictEqual(cached.body, body);
     });
@@ -174,8 +174,8 @@ describe("Cache Module", () => {
       saveToCache(url, body, {}, 200);
       const cached2 = getCached(url);
 
-      assert.strictEqual(cached1 !== null, true);
-      assert.strictEqual(cached2 !== null, true);
+      assert.ok(cached1);
+      assert.ok(cached2);
       assert.strictEqual(cached1.body, cached2.body);
     });
 
