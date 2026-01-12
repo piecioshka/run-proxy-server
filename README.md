@@ -37,3 +37,30 @@ npm run start -- --url https://example.com --port 8080 --denylist "*/api/*,*.jso
 ```bash
 npm run dev -- --url URL --port PORT [--denylist PATTERNS]
 ```
+
+## Testing
+
+Run the unit tests:
+
+```bash
+npm test
+```
+
+The test suite includes comprehensive tests for the denylist functionality, covering:
+- Pattern parsing and caching
+- Wildcard matching (beginning, middle, end)
+- Multiple patterns
+- Special character escaping
+- Performance optimizations
+
+## Examples
+
+See the [`examples/`](examples/) directory for detailed usage examples:
+
+- **Basic Usage** - Simple denylist with JSON files
+- **API Exclusion** - Exclude all API endpoints
+- **Multiple Patterns** - Combine different exclusion rules
+- **Programmatic Usage** - Integrate denylist in your code
+- **CDN Exclusion** - Exclude CDN domains
+
+For more details, see [examples/README.md](examples/README.md).
