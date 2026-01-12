@@ -24,16 +24,6 @@ function getCacheFilePath(url) {
 }
 
 /**
- * Check if a resource is cached
- * @param {string} url
- * @returns {boolean}
- */
-function isCached(url) {
-  const filePath = getCacheFilePath(url);
-  return fs.existsSync(filePath);
-}
-
-/**
  * Get cached resource
  * @param {string} url
  * @returns {{ body: Buffer | string, headers: Record<string, string>, status: number } | null}
@@ -94,7 +84,6 @@ function saveToCache(url, body, headers, status) {
 }
 
 module.exports = {
-  isCached,
   getCached,
   saveToCache,
 };

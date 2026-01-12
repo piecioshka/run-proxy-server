@@ -3,7 +3,7 @@ const debug = require("debug");
 const { APP_PORT, PROTOCOL, HOST } = require("./config");
 const { createServer } = require("./createServer");
 const { proxy } = require("./proxy");
-const { isCached, getCached, saveToCache } = require("./cache");
+const { getCached, saveToCache } = require("./cache");
 
 debug.enable("*");
 
@@ -32,13 +32,11 @@ async function handleRequest(req, res) {
     const url = `${PROTOCOL}://${HOST}${req.url}`;
     
     // Check if the resource is cached
-    if (isCached(url)) {
-      const cached = getCached(url);
-      if (cached) {
-        console.debug(url, "- CACHED");
-        res.writeHead(cached.status, cached.headers).end(cached.body);
-        return;
-      }
+    const cached = getCached(url);
+    if (cached) {
+      console.debug(url, "- CACHED");
+      res.writeHead(cached.status, cached.headers).end(cached.body);
+      return;
     }
     
     // Not cached, make the request
