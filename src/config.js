@@ -11,36 +11,67 @@ if (!argv.url) {
 
 const url = new URL(argv.url);
 
+// Cache parsed denylist patterns to avoid re-parsing on every access
+let cachedDenylist = null;
+
 /**
  * Parse denylist patterns from command line argument
  * @returns {string[]} Array of URL patterns to deny from caching
  */
 function parseDenylist() {
-  if (!argv.denylist) {
-    return [];
+  if (cachedDenylist !== null) {
+    return cachedDenylist;
   }
-  return argv.denylist.split(",").map((pattern) => pattern.trim()).filter(Boolean);
+  
+  if (!argv.denylist) {
+    cachedDenylist = [];
+    return cachedDenylist;
+  }
+  
+  cachedDenylist = argv.denylist.split(",").map((pattern) => pattern.trim()).filter(Boolean);
+  return cachedDenylist;
+}
+
+// Cache compiled regex patterns for performance
+const regexCache = new Map();
+
+/**
+ * Convert a wildcard pattern to a compiled regex
+ * @param {string} pattern - Pattern with wildcards
+ * @returns {RegExp} Compiled regular expression
+ */
+function patternToRegex(pattern) {
+  if (regexCache.has(pattern)) {
+    return regexCache.get(pattern);
+  }
+  
+  // Convert wildcard pattern to regex
+  // Escape special regex characters except *
+  const regexPattern = pattern
+    .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*");
+  const regex = new RegExp(`^${regexPattern}$`);
+  
+  regexCache.set(pattern, regex);
+  return regex;
 }
 
 /**
  * Check if a URL matches any pattern in the denylist
  * Supports wildcards: * matches any characters
  * @param {string} urlToCheck - The URL to check
- * @param {string[]} patterns - Array of patterns to match against
+ * @param {string[]} patterns - Array of patterns to match against (optional, uses parsed denylist by default)
  * @returns {boolean} True if URL matches any denylist pattern
  */
-function isUrlDenylisted(urlToCheck, patterns = parseDenylist()) {
-  if (patterns.length === 0) {
+function isUrlDenylisted(urlToCheck, patterns) {
+  const patternsToCheck = patterns !== undefined ? patterns : parseDenylist();
+  
+  if (patternsToCheck.length === 0) {
     return false;
   }
 
-  return patterns.some((pattern) => {
-    // Convert wildcard pattern to regex
-    // Escape special regex characters except *
-    const regexPattern = pattern
-      .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
-      .replace(/\*/g, ".*");
-    const regex = new RegExp(`^${regexPattern}$`);
+  return patternsToCheck.some((pattern) => {
+    const regex = patternToRegex(pattern);
     return regex.test(urlToCheck);
   });
 }
