@@ -62,26 +62,24 @@ async function loadFromCache(url) {
  * @param {number} status
  */
 async function saveToCache(url, body, headers, status) {
-  // Ensure cache directory exists
-  if (!fsSync.existsSync(CACHE_DIR)) {
-    await fs.mkdir(CACHE_DIR, { recursive: true });
-  }
-
-  const filePath = getCacheFilePath(url);
-  
-  // Convert body to base64 if it's a Buffer
-  const bodyToStore = Buffer.isBuffer(body) ? body.toString("base64") : body;
-  const isBuffer = Buffer.isBuffer(body);
-
-  const cacheData = {
-    body: bodyToStore,
-    headers,
-    status,
-    isBuffer,
-    cachedAt: new Date().toISOString(),
-  };
-
   try {
+    // Ensure cache directory exists (recursive and safe for concurrent calls)
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+
+    const filePath = getCacheFilePath(url);
+    
+    // Convert body to base64 if it's a Buffer
+    const bodyToStore = Buffer.isBuffer(body) ? body.toString("base64") : body;
+    const isBuffer = Buffer.isBuffer(body);
+
+    const cacheData = {
+      body: bodyToStore,
+      headers,
+      status,
+      isBuffer,
+      cachedAt: new Date().toISOString(),
+    };
+
     await fs.writeFile(filePath, JSON.stringify(cacheData, null, 2));
   } catch (err) {
     // Silently fail if we can't write to cache

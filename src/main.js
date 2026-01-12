@@ -67,8 +67,10 @@ async function handleRequest(req, res) {
       newHeaders["content-length"] = String(size);
     }
 
-    // Save to cache
-    saveToCache(fullUrl, body, responseHeaders, response.status);
+    // Save to cache (fire-and-forget)
+    saveToCache(fullUrl, body, responseHeaders, response.status).catch(() => {
+      // Silently ignore cache save errors
+    });
 
     res.writeHead(response.status, newHeaders).end(body);
   } catch (err) {
