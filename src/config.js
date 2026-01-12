@@ -1,7 +1,6 @@
 const process = require("node:process");
-const yargs = require("yargs/yargs");
-const { hideBin } = require("yargs/helpers");
-const argv = yargs(hideBin(process.argv)).argv;
+const parseArgs = require("minimist");
+const argv = parseArgs(process.argv.slice(2));
 
 const DEFAULT_PORT = 8000;
 
