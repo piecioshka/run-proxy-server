@@ -1,4 +1,5 @@
-const fs = require("fs");
+const fs = require("fs").promises;
+const fsSync = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
@@ -10,7 +11,7 @@ const CACHE_DIR = path.join(__dirname, "..", ".cache");
  * @returns {string}
  */
 function getCacheKey(url) {
-  const hash = crypto.createHash("md5").update(url).digest("hex");
+  const hash = crypto.createHash("sha256").update(url).digest("hex");
   return hash;
 }
 
@@ -31,22 +32,22 @@ function getCacheFilePath(url) {
  */
 function isCached(url) {
   const filePath = getCacheFilePath(url);
-  return fs.existsSync(filePath);
+  return fsSync.existsSync(filePath);
 }
 
 /**
  * Loads a cached resource
  * @param {string} url
- * @returns {{ body: Buffer | string, headers: Record<string, string>, status: number } | null}
+ * @returns {Promise<{ body: Buffer | string, headers: Record<string, string>, status: number } | null>}
  */
-function loadFromCache(url) {
+async function loadFromCache(url) {
   if (!isCached(url)) {
     return null;
   }
 
   const filePath = getCacheFilePath(url);
   try {
-    const data = fs.readFileSync(filePath, "utf8");
+    const data = await fs.readFile(filePath, "utf8");
     return JSON.parse(data);
   } catch (err) {
     return null;
@@ -60,10 +61,10 @@ function loadFromCache(url) {
  * @param {Record<string, string>} headers
  * @param {number} status
  */
-function saveToCache(url, body, headers, status) {
+async function saveToCache(url, body, headers, status) {
   // Ensure cache directory exists
-  if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
+  if (!fsSync.existsSync(CACHE_DIR)) {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
   }
 
   const filePath = getCacheFilePath(url);
@@ -81,7 +82,7 @@ function saveToCache(url, body, headers, status) {
   };
 
   try {
-    fs.writeFileSync(filePath, JSON.stringify(cacheData, null, 2));
+    await fs.writeFile(filePath, JSON.stringify(cacheData, null, 2));
   } catch (err) {
     // Silently fail if we can't write to cache
   }

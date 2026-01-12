@@ -1,6 +1,6 @@
 require("isomorphic-fetch");
 const debug = require("debug");
-const { APP_PORT, PROTOCOL } = require("./config");
+const { APP_PORT, PROTOCOL, URL, HOST } = require("./config");
 const { createServer } = require("./createServer");
 const { proxy } = require("./proxy");
 const { isCached, loadFromCache, saveToCache, restoreBody } = require("./cache");
@@ -29,12 +29,11 @@ async function getResponseBody(response, headers) {
 
 async function handleRequest(req, res) {
   try {
-    const { URL, HOST, PROTOCOL: targetProtocol } = require("./config");
-    const fullUrl = `${targetProtocol}://${HOST}${req.url}`;
+    const fullUrl = `${PROTOCOL}://${HOST}${req.url}`;
     
     // Check if resource is cached
     if (isCached(fullUrl)) {
-      const cached = loadFromCache(fullUrl);
+      const cached = await loadFromCache(fullUrl);
       if (cached) {
         const body = restoreBody(cached);
         const size = Buffer.byteLength(body);
