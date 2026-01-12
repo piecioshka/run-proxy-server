@@ -5,8 +5,9 @@
  * programmatically in your code.
  */
 
-// Note: In real usage, config.js requires --url parameter
-// This example assumes you're integrating the denylist into caching logic
+// Note: Adjust the import path based on your project structure
+// When run from the examples directory: require("../src/config")
+// When integrated in your project: require("./src/config") or similar
 
 const { isUrlDenylisted } = require("../src/config");
 

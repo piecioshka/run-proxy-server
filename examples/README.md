@@ -99,7 +99,7 @@ When caching is implemented (issues #3 and #5), the denylist will be used to:
 
 Example integration:
 ```javascript
-const { isUrlDenylisted } = require('./src/config');
+const { isUrlDenylisted } = require('../src/config');
 
 async function handleRequest(url) {
   if (isUrlDenylisted(url)) {
