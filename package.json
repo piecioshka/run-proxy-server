@@ -31,6 +31,10 @@
     "auto-changelog": "^2.5.0",
     "nodemon": "^3.1.14"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/piecioshka/run-proxy-server.git"
+  },
   "keywords": [
     "proxy",
     "http",
@@ -39,6 +43,10 @@
     "cli",
     "nodejs"
   ],
-  "author": "Piotr Kowalski",
+  "author": {
+    "name": "Piotr Kowalski",
+    "email": "piecioshka@gmail.com",
+    "url": "https://piecioshka.pl"
+  },
   "license": "MIT"
 }
