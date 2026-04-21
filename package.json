@@ -1,6 +1,6 @@
 {
   "name": "run-proxy-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple tool to proxy HTTP/HTTPS requests via a local Node.js server with built-in caching",
   "main": "index.js",
   "bin": {
