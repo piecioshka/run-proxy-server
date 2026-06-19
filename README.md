@@ -10,6 +10,8 @@
 
 Simple CLI tool to run a local HTTP/HTTPS proxy server with built-in caching, powered by vanilla Node.js.
 
+![](demo/run-proxy-server.gif)
+
 > Give a ⭐️ if this project helped you!
 
 ## Features
