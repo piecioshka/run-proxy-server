@@ -12,7 +12,8 @@
     "index.js",
     "package.json",
     "README.md",
-    "!**/*.spec.*"
+    "!**/*.spec.*",
+    "LICENSE"
   ],
   "scripts": {
     "start": "node src/main.js",
