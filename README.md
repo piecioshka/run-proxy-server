@@ -1,6 +1,6 @@
 # run-proxy-server
 
-[![cli-available](https://badgen.net/static/cli/available/?icon=terminal)](https://runkit.com/npm/run-proxy-server)
+![cli-available](https://badgen.net/static/cli/available/?icon=terminal)
 [![node version](https://img.shields.io/node/v/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
 [![npm version](https://img.shields.io/npm/v/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
 [![downloads](https://img.shields.io/npm/dm/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
