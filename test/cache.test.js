@@ -281,6 +281,19 @@ describe("Cache Module", () => {
       }
     });
 
+    it("should fall back to the default TTL for an empty value", () => {
+      const url = "http://example.com/empty-ttl";
+      saveToCache(url, "kept", {}, 200);
+      ageEntry(url, 1);
+
+      process.env.CACHE_TTL_HOURS = "";
+      try {
+        assert.strictEqual(getCached(url).body, "kept");
+      } finally {
+        delete process.env.CACHE_TTL_HOURS;
+      }
+    });
+
     it("should fall back to the default TTL for a nonsense value", () => {
       const url = "http://example.com/nonsense-ttl";
       saveToCache(url, "kept", {}, 200);

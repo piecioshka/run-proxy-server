@@ -25,12 +25,19 @@ const CACHE_DIR = resolveCacheDir();
 
 /**
  * How long an entry stays valid, in hours. A malformed or negative value
- * would silently disable the cache, so it falls back to the default.
+ * would silently disable the cache, so it falls back to the default. An empty
+ * value counts as unset too - reading it as 0 would mean "keep forever".
  * @returns {number}
  */
 function getCacheTtlHours() {
-  const raw = Number(process.env.CACHE_TTL_HOURS);
-  return Number.isFinite(raw) && raw >= 0 ? raw : DEFAULT_TTL_HOURS;
+  const raw = process.env.CACHE_TTL_HOURS?.trim();
+
+  if (!raw) {
+    return DEFAULT_TTL_HOURS;
+  }
+
+  const hours = Number(raw);
+  return Number.isFinite(hours) && hours >= 0 ? hours : DEFAULT_TTL_HOURS;
 }
 
 /**
