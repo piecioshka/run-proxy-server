@@ -75,15 +75,15 @@ mkdir -p certs
 openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes -subj "/CN=localhost"
 ```
 
-> **Note:** Browsers will show a security warning for self-signed certificates — this is expected in local development. For production, use a certificate from a trusted CA (e.g. [Let's Encrypt](https://letsencrypt.org/)).
+> **Note:** Browsers will show a security warning for self-signed certificates - this is expected in local development. For production, use a certificate from a trusted CA (e.g. [Let's Encrypt](https://letsencrypt.org/)).
 
 ## Options
 
 | Argument/Option | Required | Default | Description                                        |
 | --------------- | -------- | ------- | -------------------------------------------------- |
-| `URL`           | yes      | —       | Target URL to proxy requests to                    |
+| `URL`           | yes      | -       | Target URL to proxy requests to                    |
 | `--port`        | no       | `8000`  | Port for the local proxy server                    |
-| `--denylist`    | no       | —       | Comma-separated URL patterns to exclude from cache |
+| `--denylist`    | no       | -       | Comma-separated URL patterns to exclude from cache |
 | `--no-cache`    | no       | `false` | Disable cache reads and writes for this process    |
 | `--clear-cache` | no       | `false` | Remove all cached responses and exit               |
 | `--setup-https` | no       | `false` | Generate local HTTPS certificates and exit         |
@@ -95,10 +95,10 @@ openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -da
 ```bash
 run-proxy-server https://api.github.com --port 8000
 
-# First request — proxied and cached
+# First request - proxied and cached
 curl http://localhost:8000/users/octocat
 
-# Second request — served from cache (no network call)
+# Second request - served from cache (no network call)
 curl http://localhost:8000/users/octocat
 ```
 
