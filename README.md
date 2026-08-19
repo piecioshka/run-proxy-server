@@ -18,7 +18,7 @@ Simple CLI tool to run a local HTTP/HTTPS proxy server with built-in caching, po
 
 - 🚀 Create a local proxy server (HTTP or HTTPS)
 - ⚡ Cache proxied responses to avoid redundant network requests
-- 💾 Cache stored in `.cache/` directory, keyed by MD5 hash of the full URL
+- 💾 Cache stored in `~/.cache/run-proxy-server`, keyed by a SHA-256 hash of the full URL
 - 🧰 Supports a denylist to exclude specific URLs or patterns from caching
 - 🎯 Denylist patterns support wildcards (`*`)
 
@@ -142,10 +142,26 @@ Multiple patterns are separated by commas:
 
 ## Cache
 
-- **First request**: proxied to the target, response saved to `.cache/`
-- **Subsequent requests**: served directly from `.cache/`
+Responses live in `$XDG_CACHE_HOME/run-proxy-server`, falling back to
+`~/.cache/run-proxy-server`. The cache belongs to the user, not to the
+package - installed globally, the package directory sits inside
+`node_modules`, which is read-only in many setups and wiped on every
+reinstall.
+
+- **First request**: proxied to the target, response saved to the cache
+- **Subsequent requests**: served directly from the cache
 - **Denylisted URLs**: always fetched fresh, never cached
 - **`--no-cache` mode**: cache is fully disabled (no reads and no writes)
+- **Expiry**: entries are valid for 365 days; set `CACHE_TTL_HOURS` to change
+  the window, or `0` to keep them forever
+
+Each entry is a JSON file named after the first 32 hex characters of the
+SHA-256 hash of the URL. Binary bodies are stored base64-encoded.
+
+```bash
+# Keep responses for an hour instead of a year
+CACHE_TTL_HOURS=1 run-proxy-server https://example.com
+```
 
 Clear the cache at any time:
 
