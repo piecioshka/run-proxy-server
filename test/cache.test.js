@@ -1,10 +1,42 @@
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const assert = require("node:assert");
+const crypto = require("crypto");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
-const { getCached, saveToCache, clearCache } = require("../src/cache");
 
-const TEST_CACHE_DIR = path.join(__dirname, "..", ".cache");
+// The cache directory is resolved when the module loads, so it has to be
+// redirected before the require below.
+const SANDBOX = fs.mkdtempSync(path.join(os.tmpdir(), "run-proxy-server-"));
+process.env.XDG_CACHE_HOME = SANDBOX;
+
+const {
+  getCached,
+  saveToCache,
+  clearCache,
+  getCacheDir,
+} = require("../src/cache");
+
+const TEST_CACHE_DIR = path.join(SANDBOX, "run-proxy-server");
+
+/** Rewrites the stamp of a cached entry, in days back. */
+function ageEntry(url, days) {
+  const file = cacheFileFor(url);
+  const entry = JSON.parse(fs.readFileSync(file, "utf-8"));
+  entry.cachedAt = new Date(
+    Date.now() - days * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  fs.writeFileSync(file, JSON.stringify(entry), "utf-8");
+}
+
+function cacheFileFor(url) {
+  const key = crypto
+    .createHash("sha256")
+    .update(url)
+    .digest("hex")
+    .slice(0, 32);
+  return path.join(TEST_CACHE_DIR, `${key}.json`);
+}
 
 describe("Cache Module", () => {
   beforeEach(() => {
@@ -135,10 +167,7 @@ describe("Cache Module", () => {
       saveToCache(url, "test", headers, 200);
 
       // Corrupt the cache file
-      const crypto = require("crypto");
-      const cacheKey = crypto.createHash("md5").update(url).digest("hex");
-      const cacheFile = path.join(TEST_CACHE_DIR, cacheKey);
-      fs.writeFileSync(cacheFile, "invalid json content");
+      fs.writeFileSync(cacheFileFor(url), "invalid json content");
 
       // Should return null for corrupt cache
       const cached = getCached(url);
@@ -189,6 +218,92 @@ describe("Cache Module", () => {
       const files = fs.readdirSync(TEST_CACHE_DIR);
       assert.strictEqual(files.length, 2);
       assert.notStrictEqual(files[0], files[1]);
+    });
+  });
+
+  describe("Cache location", () => {
+    it("should live in the user cache directory, not in the package", () => {
+      const packageDir = path.join(__dirname, "..");
+
+      assert.strictEqual(path.basename(getCacheDir()), "run-proxy-server");
+      assert.strictEqual(
+        getCacheDir().startsWith(packageDir),
+        false,
+        "the cache must not sit inside the package - installed globally, that is node_modules",
+      );
+    });
+
+    it("should honour XDG_CACHE_HOME", () => {
+      assert.strictEqual(getCacheDir(), path.join(SANDBOX, "run-proxy-server"));
+    });
+  });
+
+  describe("Expiry", () => {
+    it("should drop an entry older than the TTL", () => {
+      const url = "http://example.com/old";
+      saveToCache(url, "stale", {}, 200);
+      ageEntry(url, 400);
+
+      assert.strictEqual(getCached(url), null);
+    });
+
+    it("should keep an entry younger than the TTL", () => {
+      const url = "http://example.com/fresh";
+      saveToCache(url, "fresh", {}, 200);
+      ageEntry(url, 300);
+
+      assert.strictEqual(getCached(url).body, "fresh");
+    });
+
+    it("should keep entries forever when CACHE_TTL_HOURS is 0", () => {
+      const url = "http://example.com/eternal";
+      saveToCache(url, "eternal", {}, 200);
+      ageEntry(url, 4000);
+
+      process.env.CACHE_TTL_HOURS = "0";
+      try {
+        assert.strictEqual(getCached(url).body, "eternal");
+      } finally {
+        delete process.env.CACHE_TTL_HOURS;
+      }
+    });
+
+    it("should honour a custom CACHE_TTL_HOURS", () => {
+      const url = "http://example.com/short";
+      saveToCache(url, "short", {}, 200);
+      ageEntry(url, 2);
+
+      process.env.CACHE_TTL_HOURS = "12";
+      try {
+        assert.strictEqual(getCached(url), null);
+      } finally {
+        delete process.env.CACHE_TTL_HOURS;
+      }
+    });
+
+    it("should fall back to the default TTL for a nonsense value", () => {
+      const url = "http://example.com/nonsense-ttl";
+      saveToCache(url, "kept", {}, 200);
+      ageEntry(url, 1);
+
+      process.env.CACHE_TTL_HOURS = "soon";
+      try {
+        assert.strictEqual(getCached(url).body, "kept");
+      } finally {
+        delete process.env.CACHE_TTL_HOURS;
+      }
+    });
+
+    it("should drop an entry with an unreadable timestamp", () => {
+      const url = "http://example.com/no-stamp";
+      saveToCache(url, "body", {}, 200);
+
+      const file = cacheFileFor(url);
+      const entry = JSON.parse(fs.readFileSync(file, "utf-8"));
+      entry.cachedAt = "whenever";
+      fs.writeFileSync(file, JSON.stringify(entry), "utf-8");
+
+      assert.strictEqual(getCached(url), null);
     });
   });
 

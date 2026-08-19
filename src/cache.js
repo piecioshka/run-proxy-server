@@ -1,8 +1,37 @@
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
 
-const CACHE_DIR = path.join(__dirname, "..", ".cache");
+const CACHE_NAMESPACE = "run-proxy-server";
+
+// A proxied asset is worth keeping for a long time, but "forever" is not a
+// TTL - without one the only way to drop a stale entry is --clear-cache.
+const DEFAULT_TTL_HOURS = 365 * 24;
+
+/**
+ * The cache belongs to the user, not to the package. Installed globally the
+ * package directory sits inside node_modules, which is read-only in many
+ * setups and wiped on every reinstall.
+ * @returns {string}
+ */
+function resolveCacheDir() {
+  const cacheHome =
+    process.env.XDG_CACHE_HOME?.trim() || path.join(os.homedir(), ".cache");
+  return path.join(cacheHome, CACHE_NAMESPACE);
+}
+
+const CACHE_DIR = resolveCacheDir();
+
+/**
+ * How long an entry stays valid, in hours. A malformed or negative value
+ * would silently disable the cache, so it falls back to the default.
+ * @returns {number}
+ */
+function getCacheTtlHours() {
+  const raw = Number(process.env.CACHE_TTL_HOURS);
+  return Number.isFinite(raw) && raw >= 0 ? raw : DEFAULT_TTL_HOURS;
+}
 
 /**
  * Generate a cache key from a URL
@@ -10,7 +39,7 @@ const CACHE_DIR = path.join(__dirname, "..", ".cache");
  * @returns {string}
  */
 function getCacheKey(url) {
-  return crypto.createHash("md5").update(url).digest("hex");
+  return crypto.createHash("sha256").update(url).digest("hex").slice(0, 32);
 }
 
 /**
@@ -20,7 +49,30 @@ function getCacheKey(url) {
  */
 function getCacheFilePath(url) {
   const key = getCacheKey(url);
-  return path.join(CACHE_DIR, key);
+  return path.join(CACHE_DIR, `${key}.json`);
+}
+
+/**
+ * Whether an entry is past its TTL. An entry with no usable stamp cannot be
+ * aged, so it is dropped rather than trusted indefinitely.
+ * @param {unknown} cachedAt ISO timestamp written by saveToCache
+ * @returns {boolean}
+ */
+function isExpired(cachedAt) {
+  const ttlHours = getCacheTtlHours();
+
+  // A TTL of 0 means "keep forever".
+  if (ttlHours === 0) {
+    return false;
+  }
+
+  const savedAt = Date.parse(String(cachedAt));
+
+  if (Number.isNaN(savedAt)) {
+    return true;
+  }
+
+  return Date.now() - savedAt > ttlHours * 60 * 60 * 1000;
 }
 
 /**
@@ -33,6 +85,10 @@ function getCached(url) {
     const filePath = getCacheFilePath(url);
     const data = fs.readFileSync(filePath, "utf-8");
     const cached = JSON.parse(data);
+
+    if (isExpired(cached.cachedAt)) {
+      return null;
+    }
 
     // Convert body back to Buffer if it was stored as a buffer
     if (cached.isBuffer) {
@@ -66,6 +122,7 @@ function saveToCache(url, body, headers, status) {
     const isBuffer = Buffer.isBuffer(body);
 
     const cacheData = {
+      url,
       body: isBuffer ? body.toString("base64") : body,
       isBuffer,
       headers,
@@ -96,4 +153,5 @@ module.exports = {
   getCached,
   saveToCache,
   clearCache,
+  getCacheDir: () => CACHE_DIR,
 };
