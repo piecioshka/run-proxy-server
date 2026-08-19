@@ -7,9 +7,17 @@ const path = require("path");
 
 // The cache directory is resolved when the module loads, so it has to be
 // redirected before the require below.
+const ORIGINAL_XDG_CACHE_HOME = process.env.XDG_CACHE_HOME;
 const SANDBOX = fs.mkdtempSync(path.join(os.tmpdir(), "run-proxy-server-"));
 process.env.XDG_CACHE_HOME = SANDBOX;
-
+process.on("exit", () => {
+  if (ORIGINAL_XDG_CACHE_HOME === undefined) {
+    delete process.env.XDG_CACHE_HOME;
+  } else {
+    process.env.XDG_CACHE_HOME = ORIGINAL_XDG_CACHE_HOME;
+  }
+  fs.rmSync(SANDBOX, { recursive: true, force: true });
+});
 const {
   getCached,
   saveToCache,
