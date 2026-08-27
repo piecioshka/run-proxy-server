@@ -2,13 +2,13 @@ const debug = require("debug");
 const {
   APP_PORT,
   PROTOCOL,
-  HOST,
   IS_SETUP_HTTPS,
   IS_CACHE_ENABLED,
   IS_CLEAR_CACHE,
 } = require("./config");
 const { createServer } = require("./createServer");
-const { proxy } = require("./proxy");
+const { proxy, upstreamUrl, HOP_BY_HOP } = require("./proxy");
+const { isUrlDenylisted } = require("./config");
 const { getCached, saveToCache, clearCache } = require("./cache");
 const { setupHttps } = require("./setupHttps");
 
@@ -25,21 +25,34 @@ const console = {
  * @param {Record<string, string>} headers
  * @returns {Promise<string | Buffer>}
  */
+// A response is treated as binary (kept as a Buffer, not re-encoded as text)
+// unless its type is a known textual one. Guards against corrupting PDFs,
+// fonts, octet-streams and images that lack a matching content-type.
+function isTextualType(type) {
+  const value = (type ?? "").toLowerCase();
+  return (
+    value.startsWith("text/") ||
+    value.includes("json") ||
+    value.includes("xml") ||
+    value.includes("javascript") ||
+    value.includes("+text")
+  );
+}
+
 async function getResponseBody(response, headers) {
-  const type = headers["content-type"];
-  if (new RegExp("image").test(type)) {
-    return Buffer.from(await (await response.blob()).arrayBuffer());
-  } else {
+  if (isTextualType(headers["content-type"])) {
     return await response.text();
   }
+  return Buffer.from(await (await response.blob()).arrayBuffer());
 }
 
 async function handleRequest(req, res) {
+  const url = upstreamUrl(req);
   try {
-    const url = `${PROTOCOL}://${HOST}${req.url}`;
+    // Denylisted URLs are always fetched fresh and never cached.
+    const cacheable = IS_CACHE_ENABLED && !isUrlDenylisted(url);
 
-    if (IS_CACHE_ENABLED) {
-      // Check if the resource is cached
+    if (cacheable) {
       const cached = getCached(url);
       if (cached) {
         console.debug(url, "- CACHED");
@@ -55,22 +68,31 @@ async function handleRequest(req, res) {
     const size = Buffer.byteLength(body);
     const type = responseHeaders["content-type"];
     console.debug(response.url, "-", size, "-", type);
+
+    // Strip content-encoding (body is already decoded) and every hop-by-hop
+    // header (including transfer-encoding, which would conflict with a full
+    // body), then set an accurate content-length.
     const newHeaders = { ...responseHeaders };
-
     delete newHeaders["content-encoding"];
-
-    if (responseHeaders["content-length"]) {
-      newHeaders["content-length"] = String(size);
+    for (const name of HOP_BY_HOP) {
+      delete newHeaders[name];
     }
+    newHeaders["content-length"] = String(size);
 
-    if (IS_CACHE_ENABLED) {
-      // Save to cache
+    if (cacheable) {
       saveToCache(url, body, newHeaders, response.status);
     }
 
     res.writeHead(response.status, newHeaders).end(body);
   } catch (err) {
     console.error(err);
+    if (!res.headersSent) {
+      const status = err && err.name === "TimeoutError" ? 504 : 502;
+      res.writeHead(status, { "content-type": "text/plain" });
+      res.end(`Proxy error: ${err && err.message ? err.message : "upstream request failed"}\n`);
+    } else {
+      res.end();
+    }
   }
 }
 

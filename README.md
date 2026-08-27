@@ -6,7 +6,7 @@
 [![downloads](https://img.shields.io/npm/dm/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
 [![size](https://img.shields.io/bundlephobia/minzip/run-proxy-server.svg)](https://bundlephobia.com/package/run-proxy-server)
 [![license](https://img.shields.io/npm/l/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
-[![github-ci](https://github.com/piecioshka/run-proxy-server/actions/workflows/testing.yml/badge.svg)](https://github.com/piecioshka/run-proxy-server/actions/workflows/testing.yml)
+[![github-ci](https://github.com/piecioshka/run-proxy-server/actions/workflows/ci.yml/badge.svg)](https://github.com/piecioshka/run-proxy-server/actions/workflows/ci.yml)
 
 Simple CLI tool to run a local HTTP/HTTPS proxy server with built-in caching, powered by vanilla Node.js.
 
@@ -187,7 +187,7 @@ npm run dev -- https://example.com --port 8000
 npm test
 ```
 
-Tests cover cache operations, denylist pattern matching, and error handling across Node.js 18, 20, 22, and 24.
+Tests cover cache operations, denylist pattern matching, and error handling across Node.js 20, 22, and 24.
 
 ## 🤝 Contributing
 
