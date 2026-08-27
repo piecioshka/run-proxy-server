@@ -4,7 +4,7 @@
   "description": "Simple tool to proxy HTTP/HTTPS requests via a local Node.js server with built-in caching",
   "main": "index.js",
   "bin": {
-    "run-proxy-server": "bin/run-proxy-server.js"
+    "run-proxy-server": "bin/cli.js"
   },
   "files": [
     "bin/",
