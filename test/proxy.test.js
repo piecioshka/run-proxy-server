@@ -27,9 +27,22 @@ describe("proxy module", () => {
 
   it("exposes the hop-by-hop header set", () => {
     const { HOP_BY_HOP } = loadProxy();
-    for (const name of ["connection", "transfer-encoding", "upgrade", "content-length"]) {
+    for (const name of [
+      "connection",
+      "transfer-encoding",
+      "upgrade",
+      "content-length",
+    ]) {
       assert.ok(HOP_BY_HOP.has(name), `${name} should be hop-by-hop`);
     }
+  });
+
+  it("builds the upstream URL from the target origin and request path", () => {
+    const { upstreamUrl } = loadProxy();
+    assert.strictEqual(
+      upstreamUrl({ url: "/a/b?c=1" }),
+      "https://example.com/a/b?c=1",
+    );
   });
 
   it("strips hop-by-hop headers and forwards the request body", async () => {

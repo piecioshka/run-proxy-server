@@ -3,6 +3,9 @@ const parseArgs = require("minimist");
 const argv = parseArgs(process.argv.slice(2));
 
 const DEFAULT_PORT = 8000;
+// Bind to loopback only: a caching proxy replays whatever it fetched to any
+// client, so it must not be reachable from the network by default.
+const DEFAULT_HOST = "127.0.0.1";
 const IS_SETUP_HTTPS = Boolean(argv["setup-https"]);
 const IS_CLEAR_CACHE = Boolean(argv["clear-cache"]);
 const IS_CACHE_ENABLED = argv.cache !== false && !argv["no-cache"];
@@ -13,25 +16,29 @@ if (!IS_SETUP_HTTPS && !IS_CLEAR_CACHE && !urlArg) {
     [
       "run-proxy-server",
       "",
-      `Usage: run-proxy-server URL [--port ${DEFAULT_PORT}] [--denylist PATTERNS] [--no-cache] [--clear-cache] [--setup-https]`,
+      `Usage: run-proxy-server URL [--host ${DEFAULT_HOST}] [--port ${DEFAULT_PORT}] [--denylist PATTERNS] [--no-cache] [--clear-cache] [--setup-https]`,
       "",
       "Arguments:",
       "  URL                     Target URL to proxy (for example https://example.com)",
       "",
       "Options:",
+      `  --host NAME             Interface to listen on (default: ${DEFAULT_HOST})`,
       `  --port NUMBER           Local proxy port (default: ${DEFAULT_PORT})`,
       "  --denylist PATTERNS     Comma-separated URL patterns excluded from cache",
       "  --no-cache              Disable cache reads and writes during this run",
       "  --clear-cache           Remove all cached responses, then exit",
-      "  --setup-https           Generate certs/key.pem and certs/cert.pem, then exit",
+      "  --setup-https           Generate key.pem and cert.pem in $XDG_CONFIG_HOME/run-proxy-server/certs, then exit",
       "",
       "Environment:",
       "  XDG_CACHE_HOME           Base directory for cache files (default: ~/.cache)",
+      "  XDG_CONFIG_HOME          Base directory for HTTPS certs (default: ~/.config)",
+      "  PROXY_TIMEOUT_MS         Upstream request timeout in milliseconds (default: 30000)",
       "  CACHE_TTL_HOURS          How long a cached response stays valid (default: 8760, 0 = forever)",
       "  (cache key)              sha256(url) first 32 hex chars + .json in $XDG_CACHE_HOME/run-proxy-server",
       "",
       "Examples:",
-      "  run-proxy-server http://example.com --port 8000",
+      "  run-proxy-server https://example.com --port 8000",
+      "  run-proxy-server https://example.com --host 0.0.0.0 --port 8000",
       "  run-proxy-server https://api.github.com --port 8443",
       '  run-proxy-server https://example.com --denylist "*/api/*,*.json"',
       "  run-proxy-server https://example.com --no-cache",
@@ -113,6 +120,9 @@ function isUrlDenylisted(urlToCheck, patterns) {
 }
 
 module.exports = {
+  get APP_HOST() {
+    return argv.host ?? DEFAULT_HOST;
+  },
   get APP_PORT() {
     return argv.port ?? DEFAULT_PORT;
   },

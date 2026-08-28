@@ -41,7 +41,7 @@ function setupHttps() {
   } catch (error) {
     if (error.code === "ENOENT") {
       process.stderr.write(
-        "Could not run openssl. Install OpenSSL and try again, or generate certs manually in certs/key.pem and certs/cert.pem.\n",
+        `Could not run openssl. Install OpenSSL and try again, or generate key.pem and cert.pem manually in ${CERTS_DIR}.\n`,
       );
       process.exit(1);
     }

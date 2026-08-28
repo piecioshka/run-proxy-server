@@ -13,7 +13,7 @@ Set MarginFill "#212830"
 Set BorderRadius 10
 
 Hide
-Type 'cd /tmp/run-proxy-server-demo && clear' Enter
+Type 'mkdir -p tmp/demo && cd tmp/demo && clear' Enter
 Show
 
 Type "run-proxy-server" Sleep 200ms Enter
@@ -22,7 +22,7 @@ Wait Sleep 1800ms
 Enter Enter Type "# start a caching HTTP proxy in front of a target URL" Sleep 200ms Enter Enter
 Wait Sleep 800ms
 
-Type "run-proxy-server http://example.com --port 8000" Sleep 500ms Enter
+Type "run-proxy-server https://example.com --port 8000" Sleep 500ms Enter
 Sleep 2500ms
 Ctrl+C
 Sleep 1500ms

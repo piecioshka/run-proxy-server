@@ -1,9 +1,24 @@
 const fs = require("fs");
 const http = require("http");
 const https = require("https");
+const os = require("node:os");
 const path = require("node:path");
 
-const CERTS_DIR = path.join(__dirname, "..", "certs");
+const CONFIG_NAMESPACE = "run-proxy-server";
+
+/**
+ * Certificates belong to the user, not to the package. Installed globally the
+ * package directory sits inside node_modules, which is read-only in many
+ * setups and wiped on every reinstall.
+ * @returns {string}
+ */
+function resolveCertsDir() {
+  const configHome =
+    process.env.XDG_CONFIG_HOME?.trim() || path.join(os.homedir(), ".config");
+  return path.join(configHome, CONFIG_NAMESPACE, "certs");
+}
+
+const CERTS_DIR = resolveCertsDir();
 const CERT_KEY_PATH = path.join(CERTS_DIR, "key.pem");
 const CERT_PATH = path.join(CERTS_DIR, "cert.pem");
 

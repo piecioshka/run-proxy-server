@@ -38,6 +38,30 @@ describe("config module - denylist functionality", () => {
       assert.strictEqual(config.URL.toString(), "https://example.com/");
     });
 
+    it("should listen on loopback by default", () => {
+      process.argv = ["node", "script.js", "https://example.com"];
+      const config = require("../src/config.js");
+
+      assert.strictEqual(config.APP_HOST, "127.0.0.1");
+      assert.strictEqual(config.APP_PORT, 8000);
+    });
+
+    it("should accept --host and --port", () => {
+      process.argv = [
+        "node",
+        "script.js",
+        "https://example.com",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "9000",
+      ];
+      const config = require("../src/config.js");
+
+      assert.strictEqual(config.APP_HOST, "0.0.0.0");
+      assert.strictEqual(config.APP_PORT, 9000);
+    });
+
     it("should enable cache by default", () => {
       process.argv = ["node", "script.js", "https://example.com"];
       const config = require("../src/config.js");

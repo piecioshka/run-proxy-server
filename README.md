@@ -1,5 +1,6 @@
 # run-proxy-server
 
+<!-- prettier-ignore-start -->
 ![cli-available](https://badgen.net/static/cli/available/?icon=terminal)
 [![node version](https://img.shields.io/node/v/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
 [![npm version](https://img.shields.io/npm/v/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
@@ -7,6 +8,7 @@
 [![size](https://img.shields.io/bundlephobia/minzip/run-proxy-server.svg)](https://bundlephobia.com/package/run-proxy-server)
 [![license](https://img.shields.io/npm/l/run-proxy-server.svg)](https://www.npmjs.com/package/run-proxy-server)
 [![github-ci](https://github.com/piecioshka/run-proxy-server/actions/workflows/ci.yml/badge.svg)](https://github.com/piecioshka/run-proxy-server/actions/workflows/ci.yml)
+<!-- prettier-ignore-end -->
 
 Simple CLI tool to run a local HTTP/HTTPS proxy server with built-in caching, powered by vanilla Node.js.
 
@@ -21,6 +23,8 @@ Simple CLI tool to run a local HTTP/HTTPS proxy server with built-in caching, po
 - 💾 Cache stored in `~/.cache/run-proxy-server`, keyed by a SHA-256 hash of the full URL
 - 🧰 Supports a denylist to exclude specific URLs or patterns from caching
 - 🎯 Denylist patterns support wildcards (`*`)
+- 🔒 Only `GET` responses are cached; `Set-Cookie`, `Cache-Control: private/no-store`, authorized requests and 5xx are always fetched fresh
+- 🏠 Listens on loopback (`127.0.0.1`) only unless you opt in with `--host`
 
 ## Quick Start
 
@@ -33,7 +37,7 @@ npm install -g run-proxy-server
 Or run without installing:
 
 ```bash
-npx run-proxy-server http://example.com --port 8000
+npx run-proxy-server https://example.com --port 8000
 ```
 
 ### One-time HTTPS setup
@@ -46,12 +50,12 @@ run-proxy-server --setup-https
 npx run-proxy-server --setup-https
 ```
 
-This creates `certs/key.pem` and `certs/cert.pem` for local HTTPS.
+This creates `key.pem` and `cert.pem` in `$XDG_CONFIG_HOME/run-proxy-server/certs` (falling back to `~/.config/run-proxy-server/certs`). The certificates belong to the user, not to the package, so a global reinstall does not wipe them.
 
 ### HTTP
 
 ```bash
-run-proxy-server http://example.com --port 8000
+run-proxy-server https://example.com --port 8000
 ```
 
 Then make requests to the proxy:
@@ -71,22 +75,23 @@ run-proxy-server https://example.com --port 8443
 If you prefer manual certificate creation instead of `--setup-https`, you can run:
 
 ```bash
-mkdir -p certs
-openssl req -x509 -newkey rsa:2048 -keyout certs/key.pem -out certs/cert.pem -days 365 -nodes -subj "/CN=localhost"
+mkdir -p ~/.config/run-proxy-server/certs
+openssl req -x509 -newkey rsa:2048 -keyout ~/.config/run-proxy-server/certs/key.pem -out ~/.config/run-proxy-server/certs/cert.pem -days 365 -nodes -subj "/CN=localhost"
 ```
 
 > **Note:** Browsers will show a security warning for self-signed certificates - this is expected in local development. For production, use a certificate from a trusted CA (e.g. [Let's Encrypt](https://letsencrypt.org/)).
 
 ## Options
 
-| Argument/Option | Required | Default | Description                                        |
-| --------------- | -------- | ------- | -------------------------------------------------- |
-| `URL`           | yes      | -       | Target URL to proxy requests to                    |
-| `--port`        | no       | `8000`  | Port for the local proxy server                    |
-| `--denylist`    | no       | -       | Comma-separated URL patterns to exclude from cache |
-| `--no-cache`    | no       | `false` | Disable cache reads and writes for this process    |
-| `--clear-cache` | no       | `false` | Remove all cached responses and exit               |
-| `--setup-https` | no       | `false` | Generate local HTTPS certificates and exit         |
+| Argument/Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `URL` | yes | - | Target URL to proxy requests to |
+| `--host` | no | `localhost` | Interface to listen on (`0.0.0.0` exposes the proxy to the network) |
+| `--port` | no | `8000` | Port for the local proxy server |
+| `--denylist` | no | - | Comma-separated URL patterns to exclude from cache |
+| `--no-cache` | no | `false` | Disable cache reads and writes for this process |
+| `--clear-cache` | no | `false` | Remove all cached responses and exit |
+| `--setup-https` | no | `false` | Generate local HTTPS certificates and exit |
 
 ## Examples
 
@@ -112,6 +117,14 @@ curl http://localhost:8000/api/users
 
 # Static assets are cached
 curl http://localhost:8000/index.html
+```
+
+### Expose the proxy to other devices
+
+By default the proxy listens on loopback (`127.0.0.1`) only, because it replays cached responses to every client. Opt in explicitly when you need it on the network:
+
+```bash
+run-proxy-server https://example.com --host 0.0.0.0 --port 8000
 ```
 
 ### Disable cache entirely for a run
@@ -142,21 +155,17 @@ Multiple patterns are separated by commas:
 
 ## Cache
 
-Responses live in `$XDG_CACHE_HOME/run-proxy-server`, falling back to
-`~/.cache/run-proxy-server`. The cache belongs to the user, not to the
-package - installed globally, the package directory sits inside
-`node_modules`, which is read-only in many setups and wiped on every
-reinstall.
+Responses live in `$XDG_CACHE_HOME/run-proxy-server`, falling back to `~/.cache/run-proxy-server`. The cache belongs to the user, not to the package - installed globally, the package directory sits inside `node_modules`, which is read-only in many setups and wiped on every reinstall.
 
 - **First request**: proxied to the target, response saved to the cache
 - **Subsequent requests**: served directly from the cache
+- **Only `GET`**: `HEAD`, `POST` and other methods always go upstream and are never stored
+- **Never stored**: responses with `Set-Cookie` or `Cache-Control: private` / `no-store`, responses to requests carrying `Authorization`, and 5xx errors
 - **Denylisted URLs**: always fetched fresh, never cached
 - **`--no-cache` mode**: cache is fully disabled (no reads and no writes)
-- **Expiry**: entries are valid for 365 days; set `CACHE_TTL_HOURS` to change
-  the window, or `0` to keep them forever
+- **Expiry**: entries are valid for 365 days; set `CACHE_TTL_HOURS` to change the window, or `0` to keep them forever
 
-Each entry is a JSON file named after the first 32 hex characters of the
-SHA-256 hash of the URL. Binary bodies are stored base64-encoded.
+Each entry is a JSON file named after the first 32 hex characters of the SHA-256 hash of the URL. Binary bodies are stored base64-encoded.
 
 ```bash
 # Keep responses for an hour instead of a year
@@ -187,12 +196,18 @@ npm run dev -- https://example.com --port 8000
 npm test
 ```
 
-Tests cover cache operations, denylist pattern matching, and error handling across Node.js 20, 22, and 24.
+Tests cover cache operations, denylist pattern matching, request handling (cache rules, hop-by-hop headers, binary bodies, 502/504 mapping) and certificate lookup across Node.js 20, 22, and 24.
+
+Format and lint before committing:
+
+```bash
+npm run format:check
+npm run lint
+```
 
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!<br />
-Feel free to check [issues page](https://github.com/piecioshka/run-proxy-server/issues/).
+Contributions, issues and feature requests are welcome!<br /> Feel free to check [issues page](https://github.com/piecioshka/run-proxy-server/issues/).
 
 ## License
 
