@@ -64,14 +64,14 @@ The denylist supports wildcard patterns:
 
 ### Common Patterns
 
-| Pattern                     | Description      | Matches                               |
-| --------------------------- | ---------------- | ------------------------------------- |
-| `*.json`                    | All JSON files   | `https://example.com/data.json`       |
-| `*.xml`                     | All XML files    | `https://example.com/config.xml`      |
-| `*/api/*`                   | All API paths    | `https://example.com/api/users`       |
-| `*/admin/*`                 | All admin paths  | `https://example.com/admin/dashboard` |
-| `https://cdn.example.com/*` | Specific domain  | `https://cdn.example.com/image.png`   |
-| `*/private/*`               | Private sections | `https://example.com/private/data`    |
+| Pattern | Description | Matches |
+| --- | --- | --- |
+| `*.json` | All JSON files | `https://example.com/data.json` |
+| `*.xml` | All XML files | `https://example.com/config.xml` |
+| `*/api/*` | All API paths | `https://example.com/api/users` |
+| `*/admin/*` | All admin paths | `https://example.com/admin/dashboard` |
+| `https://cdn.example.com/*` | Specific domain | `https://cdn.example.com/image.png` |
+| `*/private/*` | Private sections | `https://example.com/private/data` |
 
 ## Use Cases
 
