@@ -12,6 +12,7 @@
     "index.js",
     "package.json",
     "README.md",
+    "CHANGELOG.md",
     "!**/*.spec.*",
     "LICENSE"
   ],
@@ -57,5 +58,10 @@
     "email": "piecioshka@gmail.com",
     "url": "https://piecioshka.pl"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "auto-changelog": {
+    "commitLimit": false,
+    "backfillLimit": false,
+    "hideCredit": true
+  }
 }
